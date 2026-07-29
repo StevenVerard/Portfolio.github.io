@@ -298,13 +298,50 @@
             max-width: 90%;
             max-height: 90%;
             position: relative;
+            padding: 20px;
         }
 
         .modal-content img {
             max-width: 100%;
-            max-height: 80vh;
+            max-height: 60vh;
             display: block;
             margin: 0 auto;
+            border-radius: 8px;
+        }
+
+        .modal-caption {
+            margin-top: 16px;
+            color: rgba(245, 245, 245, 0.85);
+            font-size: 1rem;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .modal-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .modal-button {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: var(--text-light);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .modal-button:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .modal-button:disabled {
+            opacity: 0.4;
+            cursor: default;
         }
 
         .close-modal {
@@ -580,7 +617,7 @@ Je suis conscient qu’en entreprise, notamment en alternance, les missions peuv
                         </div>
                         <div class="project-links">
                             <a href="#" target="_blank">En développement</a>
-                            <a href="#" class="open-modal" data-image="images/soul_of_merlin_image_jeux.png">Voir les captures</a>
+                            <a href="#" class="open-modal" data-images="images/the_soul_of_merlin.png, images/soul_of_merlin_image_jeux.png" data-caption="Plongez dans l'univers mystique de Merlin, entre plateforme et exploration." >Voir les captures</a>
                         </div>
                     </div>
                 </div>
@@ -776,6 +813,11 @@ Je suis conscient qu’en entreprise, notamment en alternance, les missions peuv
         <div class="modal-content">
             <button class="close-modal" id="closeModal">&times;</button>
             <img id="modalImage" src="" alt="Project Screenshot">
+            <div class="modal-caption" id="modalCaption"></div>
+            <div class="modal-controls">
+                <button class="modal-button" id="modalPrev">Précédent</button>
+                <button class="modal-button" id="modalNext">Suivant</button>
+            </div>
         </div>
     </div>    
 <script>        // ===== FILTER GALLERY =====
@@ -803,16 +845,63 @@ Je suis conscient qu’en entreprise, notamment en alternance, les missions peuv
         // ===== MODAL FOR IMAGES =====
         const modal = document.getElementById('imageModal');
         const modalImage = document.getElementById('modalImage');
+        const modalCaption = document.getElementById('modalCaption');
+        const modalPrev = document.getElementById('modalPrev');
+        const modalNext = document.getElementById('modalNext');
         const closeModal = document.getElementById('closeModal');
         const openModalBtns = document.querySelectorAll('.open-modal');
+
+        let currentImages = [];
+        let currentCaption = '';
+        let currentIndex = 0;
+
+        const updateModalContent = () => {
+            if (!currentImages.length) return;
+
+            modalImage.src = currentImages[currentIndex];
+            modalImage.alt = `Image ${currentIndex + 1} sur ${currentImages.length}`;
+            modalCaption.textContent = currentCaption || `Image ${currentIndex + 1} sur ${currentImages.length}`;
+
+            if (currentImages.length > 1) {
+                modalPrev.style.visibility = 'visible';
+                modalNext.style.visibility = 'visible';
+            } else {
+                modalPrev.style.visibility = 'hidden';
+                modalNext.style.visibility = 'hidden';
+            }
+
+            modalPrev.disabled = currentIndex === 0;
+            modalNext.disabled = currentIndex === currentImages.length - 1;
+        };
 
         openModalBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                const imageUrl = btn.getAttribute('data-image');
-                modalImage.src = imageUrl;
+
+                const imagesData = btn.getAttribute('data-images') || btn.getAttribute('data-image');
+                currentImages = imagesData ? imagesData.split(',').map(src => src.trim()).filter(Boolean) : [];
+                currentCaption = btn.getAttribute('data-caption') || '';
+                currentIndex = 0;
+
+                if (!currentImages.length) return;
+
+                updateModalContent();
                 modal.classList.add('active');
             });
+        });
+
+        modalPrev.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex -= 1;
+                updateModalContent();
+            }
+        });
+
+        modalNext.addEventListener('click', () => {
+            if (currentIndex < currentImages.length - 1) {
+                currentIndex += 1;
+                updateModalContent();
+            }
         });
 
         closeModal.addEventListener('click', () => {
@@ -826,8 +915,16 @@ Je suis conscient qu’en entreprise, notamment en alternance, les missions peuv
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('active')) {
+            if (!modal.classList.contains('active')) return;
+
+            if (e.key === 'Escape') {
                 modal.classList.remove('active');
+            }
+            if (e.key === 'ArrowLeft') {
+                modalPrev.click();
+            }
+            if (e.key === 'ArrowRight') {
+                modalNext.click();
             }
         });
 </script>
